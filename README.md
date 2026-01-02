@@ -1,36 +1,145 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portfolio Website
 
-## Getting Started
+Modern, responsive portfolio website for Sameera Roshan Dias built with Next.js, TypeScript, and shadcn UI.
 
-First, run the development server:
+## 🚀 Quick Start
 
+### Development
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Open [http://localhost:3000](http://localhost:3000)
+
+### Production Build
+```bash
+npm run build
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Docker
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Or build manually
+docker build -t portfolio .
+docker run -p 3000:3000 portfolio
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📦 Features
 
-## Learn More
+- ✨ Modern, animated UI with Framer Motion
+- 🌓 Dark/Light mode support
+- 📱 Fully responsive design
+- 🎨 Built with shadcn UI components
+- ⚡ Optimized with Next.js 15+
+- 🐳 Docker-ready for easy deployment
+- 🚀 CI/CD with GitHub Actions
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Framework**: Next.js 16.1.1
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn UI
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **Theme**: next-themes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📂 Project Structure
 
-## Deploy on Vercel
+```
+portfolio/
+├── src/
+│   ├── app/              # Next.js app directory
+│   ├── components/       # React components
+│   │   ├── ui/          # shadcn UI components
+│   │   └── *.tsx        # Custom components
+│   └── lib/             # Utility functions
+├── public/              # Static assets
+├── .github/
+│   └── workflows/       # GitHub Actions
+├── Dockerfile           # Docker configuration
+└── docker-compose.yml   # Docker Compose setup
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚢 Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Automated Deployment with GitHub Actions
+
+The repository includes a GitHub Actions workflow for automated deployment to your server.
+
+#### Required GitHub Secrets
+
+Add these secrets in **Settings → Secrets and variables → Actions**:
+
+| Secret | Required | Description |
+|--------|----------|-------------|
+| `SERVER_HOST` | ✅ | Server IP or domain |
+| `SERVER_USERNAME` | ✅ | SSH username |
+| `SERVER_SSH_KEY` | ✅ | SSH private key |
+| `SERVER_PORT` | ❌ | SSH port (default: 22) |
+| `APP_PORT` | ❌ | App port (default: 3000) |
+
+📖 **Full deployment guide**: See [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+### Manual Deployment
+
+```bash
+# Build Docker image
+docker build -t portfolio .
+
+# Run container
+docker run -d -p 3000:3000 --name portfolio-app portfolio
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create `.env.local` for local development:
+```env
+# Add any environment variables here
+```
+
+### Next.js Config
+
+The app uses standalone output for optimized Docker builds. See `next.config.ts`.
+
+## 📝 Development
+
+### Adding New Sections
+
+1. Create component in `src/components/`
+2. Import in `src/app/page.tsx`
+3. Add navigation link in `src/components/Navigation.tsx`
+
+### Customizing Theme
+
+Edit colors in `src/app/globals.css` under `:root` and `.dark` classes.
+
+## 🧪 Testing
+
+```bash
+# Build test
+npm run build
+
+# Type check
+npx tsc --noEmit
+```
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 👤 Author
+
+**Sameera Roshan Dias**
+- Email: sameeradias98@gmail.com
+- LinkedIn: [sameera-dias-387943110](https://www.linkedin.com/in/sameera-dias-387943110)
+- GitHub: [@sameeradias](https://github.com/sameeradias)
+
+---
+
+Built with ❤️ using Next.js and shadcn UI
