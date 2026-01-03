@@ -66,23 +66,28 @@ portfolio/
 
 ## 🚢 Deployment
 
-### Automated Deployment with GitHub Actions
+### Self-Hosted Runner Deployment
 
-The repository includes a GitHub Actions workflow for automated deployment to your server.
+The repository uses a GitHub Actions self-hosted runner for automated deployment.
 
-#### Required GitHub Secrets
+#### Setup Self-Hosted Runner
 
-Add these secrets in **Settings → Secrets and variables → Actions**:
+Follow the detailed guide: [SELF_HOSTED_RUNNER.md](./SELF_HOSTED_RUNNER.md)
+
+Quick steps:
+1. Go to GitHub: **Settings** → **Actions** → **Runners** → **New self-hosted runner**
+2. Follow GitHub's instructions to install the runner on your server
+3. Install as a service: `sudo ./svc.sh install && sudo ./svc.sh start`
+
+#### Optional GitHub Secret
 
 | Secret | Required | Description |
 |--------|----------|-------------|
-| `SERVER_HOST` | ✅ | Server IP or domain |
-| `SERVER_USERNAME` | ✅ | SSH username |
-| `SERVER_SSH_KEY` | ✅ | SSH private key |
-| `SERVER_PORT` | ❌ | SSH port (default: 22) |
 | `APP_PORT` | ❌ | App port (default: 3000) |
 
-📖 **Full deployment guide**: See [DEPLOYMENT.md](./DEPLOYMENT.md)
+**No SSH secrets needed!** The runner runs directly on your server.
+
+📖 **Full setup guide**: See [SELF_HOSTED_RUNNER.md](./SELF_HOSTED_RUNNER.md)
 
 ### Manual Deployment
 

@@ -18,37 +18,118 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Semantic Release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
+        run: |
+          npx semantic-release
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION"
+
+      - name: Stop and remove all portfolio containers
+        run: |
+          echo "🧹 Cleaning up existing containers..."
+          # Stop all containers with the portfolio image
+          CONTAINERS=$(docker ps -a -q --filter ancestor=${{ env.DOCKER_IMAGE_NAME }} 2>/dev/null || true)
+          if [ ! -z "$CONTAINERS" ]; then
+            echo "Stopping containers: $CONTAINERS"
+            docker stop $CONTAINERS 2>/dev/null || true
+            docker rm $CONTAINERS 2>/dev/null || true
+          fi
+          
+          # Also stop and remove by container name pattern
+          docker ps -a --filter "name=${{ env.CONTAINER_NAME }}" -q | xargs -r docker stop 2>/dev/null || true
+          docker ps -a --filter "name=${{ env.CONTAINER_NAME }}" -q | xargs -r docker rm 2>/dev/null || true
+          
+          echo "✅ Container cleanup complete"
 
       - name: Build Docker image
         run: |
+          echo "🐳 Building Docker image..."
           docker build -t ${{ env.DOCKER_IMAGE_NAME }}:latest \
+                       -t ${{ env.DOCKER_IMAGE_NAME }}:v${{ steps.semantic.outputs.version }} \
                        -t ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} .
-
-      - name: Stop and remove existing container
-        run: |
-          docker stop ${{ env.CONTAINER_NAME }} 2>/dev/null || true
-          docker rm ${{ env.CONTAINER_NAME }} 2>/dev/null || true
+          echo "✅ Docker image built successfully"
 
       - name: Run new container
         run: |
+          echo "🚀 Starting new container..."
           docker run -d \
             --name ${{ env.CONTAINER_NAME }} \
             --restart unless-stopped \
             -p ${{ secrets.APP_PORT || 3000 }}:3000 \
+            -e NODE_ENV=production \
             ${{ env.DOCKER_IMAGE_NAME }}:latest
+          echo "✅ Container started successfully"
 
-      - name: Clean up old images
+      - name: Clean up old Docker images
         run: |
+          echo "🧹 Cleaning up old Docker images..."
+          # Remove dangling images
           docker image prune -f
+          
+          # Keep only the last 3 tagged versions of portfolio images
+          IMAGES_TO_DELETE=$(docker images ${{ env.DOCKER_IMAGE_NAME }} --format "{{.ID}} {{.Tag}}" | \
+            grep -v "latest" | grep -v "${{ steps.semantic.outputs.version }}" | grep -v "${{ github.sha }}" | \
+            tail -n +4 | awk '{print $1}' || true)
+          
+          if [ ! -z "$IMAGES_TO_DELETE" ]; then
+            echo "Removing old images: $IMAGES_TO_DELETE"
+            echo "$IMAGES_TO_DELETE" | xargs -r docker rmi -f 2>/dev/null || true
+          fi
+          
+          echo "✅ Image cleanup complete"
 
       - name: Verify deployment
         run: |
+          echo "🔍 Verifying deployment..."
           sleep 5
+          
           if docker ps | grep -q ${{ env.CONTAINER_NAME }}; then
             echo "✅ Deployment successful! Container is running."
+            echo ""
+            echo "📊 Container Status:"
+            docker ps --filter name=${{ env.CONTAINER_NAME }} --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            echo ""
+            echo "📝 Recent logs:"
             docker logs --tail 20 ${{ env.CONTAINER_NAME }}
+            echo ""
+            echo "🎉 Deployment completed successfully!"
+            echo "Version: v${{ steps.semantic.outputs.version }}"
           else
             echo "❌ Deployment failed! Container is not running."
-            docker logs --tail 50 ${{ env.CONTAINER_NAME }}
+            echo ""
+            echo "📝 Container logs:"
+            docker logs --tail 50 ${{ env.CONTAINER_NAME }} 2>&1 || echo "No logs available"
             exit 1
           fi
+
+      - name: Deployment Summary
+        if: success()
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** v${{ steps.semantic.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Container:** ${{ env.CONTAINER_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image:** ${{ env.DOCKER_IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ✅ Running" >> $GITHUB_STEP_SUMMARY
